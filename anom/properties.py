@@ -602,6 +602,9 @@ class String(Encodable, Property):
         if not self.indexed:
             return value
 
+        if self.optional and value is None:
+            return value
+
         if not self.repeated:
             self._validate_length(value)
 
