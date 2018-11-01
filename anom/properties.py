@@ -694,6 +694,9 @@ class Embed(EmbedLike):
         return self._prepare_to_load_properties(data)
 
     def _prepare_to_load_repeated_properties(self, data):
+        if self.optional and not data:
+            return None
+
         datas = [{} for _ in range(len(next(iter(data.values()))))]
         for key, values in data.items():
             for i, value in enumerate(values):
@@ -728,6 +731,8 @@ class Embed(EmbedLike):
 
         # Ensure all sublists are equal, otherwise rebuilding the
         # entity is not going to be possible.
+        import logging
+        logging.warning(f"{properties}")
         props_are_valid = reduce(operator.eq, (len(val) for val in properties.values()))
         if not props_are_valid:  # pragma: no cover
             raise ValueError(
