@@ -118,6 +118,20 @@ def test_optional_repeated_embed_properties_can_be_assigned_none(adapter):
     assert place == place.key.get()
 
 
+def test_optional_repeated_embed_properties_can_be_created_with_none(adapter):
+    # Given that i have an place entity w/ a optional repeated embed property,
+    # but don't assign it in the constructor
+    place = Place(
+        name="New York"
+    )
+
+    # And save that entity
+    place.put()
+
+    # Then I should be able to get back the same entity from datastore
+    assert place == place.key.get()
+
+
 class Variation(Model):
     weight = props.Integer(indexed=True)
 
