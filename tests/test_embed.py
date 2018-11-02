@@ -131,6 +131,20 @@ def test_optional_repeated_embed_properties_can_be_created_with_none(adapter):
     # Then I should be able to get back the same entity from datastore
     assert place == place.key.get()
 
+def test_optional_repeated_embed_properties_can_be_created_with_empty_list(adapter):
+    # Given that i have an place entity w/ a optional repeated embed property,
+    # but assign it an empty list in the constructor
+    place = Place(
+        name="New York",
+        points=[]
+    )
+
+    # And save that entity with the empty list
+    place.put()
+
+    # Then I should be able to get back the same entity from datastore
+    assert place == place.key.get()
+
 
 class Variation(Model):
     weight = props.Integer(indexed=True)

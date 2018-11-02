@@ -724,6 +724,9 @@ class Embed(EmbedLike):
             raise RuntimeError(f"Property {self.name_on_model} requires a value.")
 
     def _prepare_to_store_repeated_properties(self, entities):
+        if self.optional and not entities:
+            return None
+        
         properties = defaultdict(list)
         for entity in entities:
             for name, value in self._prepare_to_store_properties(entity):
@@ -731,8 +734,6 @@ class Embed(EmbedLike):
 
         # Ensure all sublists are equal, otherwise rebuilding the
         # entity is not going to be possible.
-        import logging
-        logging.warning(f"{properties}")
         props_are_valid = reduce(operator.eq, (len(val) for val in properties.values()))
         if not props_are_valid:  # pragma: no cover
             raise ValueError(
