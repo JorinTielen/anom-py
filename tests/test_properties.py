@@ -13,53 +13,13 @@ all_properties = inspect.getmembers(props, lambda x: (
     inspect.isclass(x) and issubclass(x, Property) and
     x not in {props.Computed, props.Embed}
 ))
-blob_properties = (props.Bytes, props.Json, props.Text)
-encodable_properties = (props.String, props.Text)
+blob_properties = (props.Bytes, props.Json)
 
 
 def test_blobs_cannot_be_indexed():
     for property_class in blob_properties:
         with pytest.raises(TypeError):
             property_class(indexed=True)
-
-
-def test_compressables_can_be_compressed():
-    string = "a" * 1000
-    text = props.Text(compressed=True, compression_level=9)
-    compressed_bytes = text.prepare_to_store(None, string)
-    assert len(compressed_bytes) == 17
-
-    uncompressed_string = text.prepare_to_load(None, compressed_bytes)
-    assert uncompressed_string == string
-
-
-def test_compressables_compression_level_needs_to_be_in_a_specific_range():
-    with pytest.raises(ValueError):
-        props.Text(compressed=True, compression_level=20)
-
-
-def test_encodables_respect_their_encodings():
-    string = "こんにちは"
-    encoded_string = string.encode("utf-8")
-    for property_class in encodable_properties:
-        prop = property_class()
-        assert prop.prepare_to_store(None, string) == encoded_string
-        assert prop.prepare_to_load(None, encoded_string) == string
-
-
-def test_encodables_avoid_loading_nones():
-    for property_class in encodable_properties:
-        prop = property_class()
-        assert prop.prepare_to_load(None, None) is None
-
-
-def test_encodables_respect_repeated_option():
-    string_list = ["a", "b"]
-    bytes_list = [b"a", b"b"]
-    for property_class in encodable_properties:
-        prop = property_class(repeated=True)
-        assert prop.prepare_to_store(None, string_list) == bytes_list
-        assert prop.prepare_to_load(None, bytes_list) == string_list
 
 
 def test_keys_can_be_assigned_full_keys():

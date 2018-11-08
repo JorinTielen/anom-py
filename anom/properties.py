@@ -72,42 +72,6 @@ class Compressable(Blob):
         return super().prepare_to_store(entity, value)
 
 
-class Encodable:
-    """Mixin for string properties that have an encoding.
-
-    Parameters:
-      encoding(str): The encoding to use when persisting this Property
-        to Datastore.  Defaults to ``utf-8``.
-    """
-
-    def __init__(self, *, encoding="utf-8", **options):
-        super().__init__(**options)
-
-        self.encoding = encoding
-
-    def prepare_to_load(self, entity, value):
-        value = super().prepare_to_load(entity, value)
-
-        # BUG(gcloud): Projections seem to cause bytes to be
-        # loaded as strings so this instance check is required.
-        if value is not None and isinstance(value, (list, bytes)):
-            if self.repeated:
-                value = [v.decode(self.encoding) for v in value]
-            else:
-                value = value.decode(self.encoding)
-
-        return value
-
-    def prepare_to_store(self, entity, value):
-        if value is not None:
-            if self.repeated:
-                value = [v.encode(self.encoding) for v in value]
-            else:
-                value = value.encode(self.encoding)
-
-        return super().prepare_to_store(entity, value)
-
-
 class Serializer(Compressable, Property):
     """Base class for properties that serialize data.
     """
@@ -564,7 +528,7 @@ class Msgpack(Serializer):
         return msgpack.unpackb(data, ext_hook=cls._deserialize, encoding="utf-8")
 
 
-class String(Encodable, Property):
+class String(Property):
     """A Property for indexable string values.
 
     Parameters:
@@ -582,15 +546,12 @@ class String(Encodable, Property):
       repeated(bool, optional): Whether or not this property is
         repeated.  Defaults to ``False``.  Optional repeated
         properties default to an empty list.
-      encoding(str): The encoding to use when persisting this Property
-        to Datastore.  Defaults to ``utf-8``.
     """
 
     _types = (str,)
 
     def _validate_length(self, value):
-        if len(value) > _max_indexed_length and \
-           len(value.encode(self.encoding)) > _max_indexed_length:
+        if len(value) > _max_indexed_length:
             raise ValueError(
                 f"String value is longer than the maximum allowed length "
                 f"({_max_indexed_length}) for indexed properties. Set "
@@ -611,7 +572,7 @@ class String(Encodable, Property):
         return value
 
 
-class Text(Encodable, Compressable, Property):
+class Text(Property):
     """A Property for long string values that are never indexed.
 
     Parameters:
@@ -624,12 +585,6 @@ class Text(Encodable, Compressable, Property):
       repeated(bool, optional): Whether or not this property is
         repeated.  Defaults to ``False``.  Optional repeated
         properties default to an empty list.
-      compressed(bool, optional): Whether or not this property should
-        be compressed before being persisted.
-      compression_level(int, optional): The amount of compression to
-        apply when compressing values.
-      encoding(str): The encoding to use when persisting this Property
-        to Datastore.  Defaults to ``utf-8``.
     """
 
     _types = (str,)
