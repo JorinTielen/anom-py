@@ -694,6 +694,9 @@ class Embed(EmbedLike):
         return self._prepare_to_load_properties(data)
 
     def _prepare_to_load_repeated_properties(self, data):
+        if self.optional and not data:
+            return None
+
         datas = [{} for _ in range(len(next(iter(data.values()))))]
         for key, values in data.items():
             for i, value in enumerate(values):
@@ -721,6 +724,9 @@ class Embed(EmbedLike):
             raise RuntimeError(f"Property {self.name_on_model} requires a value.")
 
     def _prepare_to_store_repeated_properties(self, entities):
+        if self.optional and not entities:
+            return None
+        
         properties = defaultdict(list)
         for entity in entities:
             for name, value in self._prepare_to_store_properties(entity):

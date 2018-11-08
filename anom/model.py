@@ -304,6 +304,9 @@ class Property:
             else:
                 return None
 
+        if self.optional and value == []:
+            value = ob._data[self.name_on_model] = None
+
         return value
 
     def __set__(self, ob, value):
