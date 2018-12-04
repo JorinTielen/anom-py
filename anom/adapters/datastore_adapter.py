@@ -99,7 +99,6 @@ class DatastoreAdapter(Adapter):
         self.client = datastore.Client(
             credentials=self.credentials,
             project=self.project,
-            _use_grpc=False,
         )
 
     @property
