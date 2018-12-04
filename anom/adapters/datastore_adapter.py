@@ -1,7 +1,6 @@
 import logging
 
 from functools import partial
-from gcloud_requests import DatastoreRequestsProxy, enter_transaction, exit_transaction
 from google.cloud import datastore
 from threading import local
 
@@ -40,7 +39,6 @@ class _DatastoreOuterTransaction(Transaction):
         _logger.debug("Beginning transaction...")
         self.ds_transaction.begin()
         self.adapter.client._push_batch(self.ds_transaction)
-        enter_transaction()
 
     def commit(self):
         try:
@@ -56,7 +54,6 @@ class _DatastoreOuterTransaction(Transaction):
 
     def end(self):
         _logger.debug("Ending transaction...")
-        exit_transaction()
         self.adapter.client._pop_batch()
         self.adapter._transactions.remove(self)
 
@@ -99,11 +96,9 @@ class DatastoreAdapter(Adapter):
     def __init__(self, *, project=None, credentials=None):
         self.project = project
         self.credentials = credentials
-        self.proxy = DatastoreRequestsProxy(credentials=credentials)
         self.client = datastore.Client(
             credentials=self.credentials,
             project=self.project,
-            _http=self.proxy,
             _use_grpc=False,
         )
 
@@ -171,12 +166,13 @@ class DatastoreAdapter(Adapter):
 
         result_iterator = query.fetch(
             limit=options.batch_size,
-            offset=options.offset,
             start_cursor=options.cursor,
         )
 
         entities = []
-        for entity in result_iterator:
+        for i, entity in enumerate(result_iterator):
+            if i < options.offset:
+                continue
             key, data = self._convert_key_from_datastore(entity.key), None
             if not options.keys_only:
                 data = self._prepare_to_load(entity)

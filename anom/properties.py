@@ -321,6 +321,8 @@ class DateTime(Property):
         # loaded as ints in microseconds.
         if value is not None and isinstance(value, int):
             value = datetime.fromtimestamp(value / 1000000, tz.tzutc())
+        elif value is not None and isinstance(value, datetime):
+            value = value.replace(tzinfo=tz.tzutc())
 
         return super().prepare_to_load(entity, value)
 
